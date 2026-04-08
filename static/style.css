@@ -1,0 +1,88 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    padding: 20px;
+}
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+h1 {
+    text-align: center;
+    color: #444;
+}
+h2 {
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+    margin-top: 30px;
+    color: #555;
+}
+.section {
+    margin-bottom: 20px;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+input, select, textarea {
+    margin-top: 5px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: #f9f9f9;
+}
+button {
+    padding: 8px 12px;
+    border: none;
+    background: #007BFF;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+button:hover {
+    background: #0056b3;
+}
+.primary-btn {
+    font-size: 1.2em;
+    padding: 12px 20px;
+    background: #28a745;
+    width: 100%;
+    margin-top: 20px;
+}
+.primary-btn:hover {
+    background: #218838;
+}
+#items-table input {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+.customer-actions {
+    margin-bottom: 15px;
+}

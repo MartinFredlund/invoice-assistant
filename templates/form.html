@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Skapa Faktura</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Skapa Faktura</h1>
+        
+        <form id="invoice-form">
+            <div class="section">
+                <h2>Fakturadetaljer</h2>
+                <div class="grid">
+                    <label>Fakturanummer: <input type="text" id="invoice_number" value="{{ defaults.invoice_number }}" readonly></label>
+                    <label>Fakturadatum: <input type="date" id="invoice_date" value="{{ defaults.invoice_date }}" required></label>
+                    <label>Förfallodatum: <input type="date" id="due_date" value="{{ defaults.due_date }}" required></label>
+                    <label>Betalningsvillkor: <input type="text" id="betalningsvillkor" value="20 Dagar netto"></label>
+                    <label>Dröjsmålsränta: <input type="text" id="drojsmalsranta" value="8 %"></label>
+                    <label>OCR: <input type="text" id="ocr" value="{{ defaults.invoice_number | replace('-', '') }}"></label>
+                    <label>Vår referens: <input type="text" id="var_referens" value="Eva Fredlund"></label>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Kund</h2>
+                <div class="customer-actions">
+                    <select id="saved-customers">
+                        <option value="">-- Välj sparad kund --</option>
+                    </select>
+                    <button type="button" id="btn-save-customer">Spara kund</button>
+                    <button type="button" id="btn-delete-customer" style="display:none; color: red;">Ta bort kund</button>
+                </div>
+                
+                <input type="hidden" id="customer_id" value="">
+                <div class="grid">
+                    <label>Namn/Företag: <input type="text" id="c_name" required></label>
+                    <label>Org.nr: <input type="text" id="c_org_nr"></label>
+                    <label>Gatuadress: <input type="text" id="c_street" required></label>
+                    <label>Postnummer: <input type="text" id="c_postal_code" required></label>
+                    <label>Ort: <input type="text" id="c_city" required></label>
+                    <label>Kundnummer: <input type="text" id="c_kundnummer"></label>
+                    <label>Din referens: <input type="text" id="c_din_referens"></label>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Övrigt (Frivilligt)</h2>
+                <div class="grid">
+                    <label>Ordernummer: <input type="text" id="ordernummer"></label>
+                    <label>Leveransvillkor: <input type="text" id="leveransvillkor"></label>
+                    <label>Leveranssätt: <input type="text" id="leveranssatt"></label>
+                    <label>Leveransdatum: <input type="date" id="leveransdatum"></label>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Rader</h2>
+                <table id="items-table">
+                    <thead>
+                        <tr>
+                            <th>Artnr</th>
+                            <th>Benämning</th>
+                            <th>Antal</th>
+                            <th>Å-pris</th>
+                            <th>Moms %</th>
+                            <th>Summa</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows added dynamically -->
+                    </tbody>
+                </table>
+                <button type="button" id="btn-add-row">+ Lägg till rad</button>
+            </div>
+
+            <div class="section">
+                <h2>Meddelande</h2>
+                <textarea id="message" rows="3" style="width: 100%;">Tack för beställningen.</textarea>
+            </div>
+
+            <div class="submit-section">
+                <button type="submit" id="btn-submit" class="primary-btn">Skapa Faktura (PDF)</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const customersSelect = document.getElementById('saved-customers');
+        let customersData = [];
+
+        async function loadCustomers() {
+            const res = await fetch('/customers');
+            customersData = await res.json();
+            customersSelect.innerHTML = '<option value="">-- Välj sparad kund --</option>';
+            customersData.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                customersSelect.appendChild(opt);
+            });
+        }
+
+        customersSelect.addEventListener('change', (e) => {
+            const id = e.target.value;
+            const delBtn = document.getElementById('btn-delete-customer');
+            if (!id) {
+                document.getElementById('customer_id').value = '';
+                document.getElementById('c_name').value = '';
+                document.getElementById('c_org_nr').value = '';
+                document.getElementById('c_street').value = '';
+                document.getElementById('c_postal_code').value = '';
+                document.getElementById('c_city').value = '';
+                document.getElementById('c_kundnummer').value = '';
+                document.getElementById('c_din_referens').value = '';
+                delBtn.style.display = 'none';
+                return;
+            }
+            
+            const cust = customersData.find(c => c.id === id);
+            if (cust) {
+                document.getElementById('customer_id').value = cust.id;
+                document.getElementById('c_name').value = cust.name || '';
+                document.getElementById('c_org_nr').value = cust.org_nr || '';
+                document.getElementById('c_street').value = cust.street || '';
+                document.getElementById('c_postal_code').value = cust.postal_code || '';
+                document.getElementById('c_city').value = cust.city || '';
+                document.getElementById('c_kundnummer').value = cust.kundnummer || '';
+                document.getElementById('c_din_referens').value = cust.din_referens || '';
+                delBtn.style.display = 'inline-block';
+            }
+        });
+
+        document.getElementById('btn-save-customer').addEventListener('click', async () => {
+            const cust = {
+                id: document.getElementById('customer_id').value,
+                name: document.getElementById('c_name').value,
+                org_nr: document.getElementById('c_org_nr').value,
+                street: document.getElementById('c_street').value,
+                postal_code: document.getElementById('c_postal_code').value,
+                city: document.getElementById('c_city').value,
+                kundnummer: document.getElementById('c_kundnummer').value,
+                din_referens: document.getElementById('c_din_referens').value
+            };
+            if (!cust.name) return alert("Fyll i namn först.");
+            const res = await fetch('/customers', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(cust)
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('customer_id').value = data.id;
+                await loadCustomers();
+                customersSelect.value = data.id;
+                alert('Kund sparad.');
+                document.getElementById('btn-delete-customer').style.display = 'inline-block';
+            }
+        });
+
+        document.getElementById('btn-delete-customer').addEventListener('click', async () => {
+            const id = document.getElementById('customer_id').value;
+            if (!id) return;
+            if (confirm("Är du säker på att du vill ta bort den här kunden?")) {
+                await fetch('/customers/' + id, {method: 'DELETE'});
+                document.getElementById('customer_id').value = '';
+                await loadCustomers();
+                customersSelect.value = '';
+                customersSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        function addRow() {
+            const tbody = document.querySelector('#items-table tbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="i_artnr"></td>
+                <td><input type="text" class="i_benamning" required></td>
+                <td><input type="number" step="0.01" class="i_antal" value="1" required></td>
+                <td><input type="number" step="0.01" class="i_apris" value="0" required></td>
+                <td><input type="number" step="0.01" class="i_moms" value="25" required></td>
+                <td class="i_summa">0</td>
+                <td><button type="button" onclick="this.closest('tr').remove(); calculateRows();">X</button></td>
+            `;
+            tbody.appendChild(tr);
+            tr.querySelectorAll('input').forEach(i => i.addEventListener('input', calculateRows));
+        }
+
+        function calculateRows() {
+            document.querySelectorAll('#items-table tbody tr').forEach(tr => {
+                const antal = parseFloat(tr.querySelector('.i_antal').value) || 0;
+                const apris = parseFloat(tr.querySelector('.i_apris').value) || 0;
+                tr.querySelector('.i_summa').textContent = (antal * apris).toFixed(2);
+            });
+        }
+
+        document.getElementById('btn-add-row').addEventListener('click', addRow);
+
+        document.getElementById('invoice-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.textContent = 'Skapar...';
+
+            const items = [];
+            document.querySelectorAll('#items-table tbody tr').forEach(tr => {
+                items.push({
+                    artnr: tr.querySelector('.i_artnr').value,
+                    benamning: tr.querySelector('.i_benamning').value,
+                    antal: tr.querySelector('.i_antal').value,
+                    a_pris: tr.querySelector('.i_apris').value,
+                    moms_procent: tr.querySelector('.i_moms').value
+                });
+            });
+
+            if (items.length === 0) {
+                alert("Lägg till minst en rad.");
+                btn.disabled = false;
+                btn.textContent = 'Skapa Faktura (PDF)';
+                return;
+            }
+
+            const payload = {
+                customer: {
+                    name: document.getElementById('c_name').value,
+                    org_nr: document.getElementById('c_org_nr').value,
+                    street: document.getElementById('c_street').value,
+                    postal_code: document.getElementById('c_postal_code').value,
+                    city: document.getElementById('c_city').value,
+                    kundnummer: document.getElementById('c_kundnummer').value,
+                    din_referens: document.getElementById('c_din_referens').value
+                },
+                invoice_date: document.getElementById('invoice_date').value,
+                due_date: document.getElementById('due_date').value,
+                betalningsvillkor: document.getElementById('betalningsvillkor').value,
+                drojsmalsranta: document.getElementById('drojsmalsranta').value,
+                ocr: document.getElementById('ocr').value,
+                var_referens: document.getElementById('var_referens').value,
+                ordernummer: document.getElementById('ordernummer').value,
+                leveransvillkor: document.getElementById('leveransvillkor').value,
+                leveranssatt: document.getElementById('leveranssatt').value,
+                leveransdatum: document.getElementById('leveransdatum').value,
+                message: document.getElementById('message').value,
+                items: items
+            };
+
+            const res = await fetch('/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const resData = await res.json();
+            
+            if (resData.success) {
+                window.location.href = resData.download_url;
+                // Reload after a short delay to get new invoice number
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                alert("Ett fel inträffade.");
+                btn.disabled = false;
+                btn.textContent = 'Skapa Faktura (PDF)';
+            }
+        });
+
+        // Initialize
+        loadCustomers();
+        addRow();
+    </script>
+</body>
+</html>

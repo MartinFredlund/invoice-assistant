@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Faktura</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 20mm;
+            @bottom-left {
+                content: "";
+            }
+        }
+        body {
+            font-family: "Helvetica", "Arial", sans-serif;
+            font-size: 10pt;
+            color: #000;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20mm;
+        }
+        .returadress {
+            font-size: 8pt;
+            color: #555;
+            width: 50%;
+        }
+        .header-title {
+            width: 50%;
+            text-align: right;
+            font-size: 24pt;
+            font-weight: bold;
+            color: #333;
+        }
+        .logo-box {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .logo-img {
+            max-height: 60px;
+            max-width: 200px;
+        }
+        .addresses {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15mm;
+        }
+        .leverantor-box {
+            width: 45%;
+        }
+        .leverantor-box h3 {
+            margin: 0;
+            font-size: 10pt;
+            border-bottom: 1px solid #000;
+            margin-bottom: 5px;
+            padding-bottom: 2px;
+        }
+        .fakturadress-box {
+            width: 45%;
+        }
+        .fakturadress-box h3 {
+            margin: 0;
+            font-size: 10pt;
+            border-bottom: 1px solid #000;
+            margin-bottom: 5px;
+            padding-bottom: 2px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 20px;
+            row-gap: 5px;
+            margin-bottom: 10mm;
+            font-size: 9pt;
+        }
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dotted #ccc;
+        }
+        .meta-label {
+            font-weight: bold;
+        }
+
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        table.items th {
+            text-align: left;
+            border-bottom: 2px solid #000;
+            padding: 5px 0;
+            font-size: 9pt;
+        }
+        table.items td {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 9pt;
+        }
+        .text-right {
+            text-align: right !important;
+        }
+
+        .totals-box {
+            margin-top: 10mm;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10mm;
+        }
+        .totals-left {
+            width: 45%;
+            font-size: 9pt;
+        }
+        .totals-right {
+            width: 45%;
+            text-align: right;
+            border: 2px solid #000;
+            padding: 10px;
+        }
+        .totals-right span {
+            display: block;
+        }
+        .att-betala-label {
+            font-size: 12pt;
+            font-weight: bold;
+        }
+        .att-betala-amount {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .message-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 15mm;
+            min-height: 30mm;
+            font-style: italic;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+        }
+        .footer-col {
+            width: 24%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-top">
+        <div class="returadress">
+            Returadress:<br>
+            {{ data.sender.name }}<br>
+            {{ data.sender.street }}<br>
+            {{ data.sender.city }}
+        </div>
+        <div class="header-title">
+            <div class="logo-box">
+                {% if data.logo_path %}
+                <img src="{{ data.logo_path }}" class="logo-img" alt="Logo">
+                {% else %}
+                <!-- Placeholder for logo -->
+                {% endif %}
+            </div>
+            FAKTURA
+        </div>
+    </div>
+
+    <div class="addresses">
+        <div class="leverantor-box">
+            <h3>Er leverantör</h3>
+            <strong>{{ data.sender.name }}</strong><br>
+            {{ data.sender.street }}<br>
+            {{ data.sender.city }}
+        </div>
+        <div class="fakturadress-box">
+            <h3>Fakturaadress</h3>
+            <strong>{{ data.customer.name }}</strong><br>
+            {% if data.customer.street %}{{ data.customer.street }}<br>{% endif %}
+            {% if data.customer.postal_code or data.customer.city %}
+            {{ data.customer.postal_code }} {{ data.customer.city }}<br>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="meta-grid">
+        <div class="meta-row"><span class="meta-label">Fakturanummer:</span> <span>{{ data.metadata.invoice_number }}</span></div>
+        <div class="meta-row"><span class="meta-label">Vår referens:</span> <span>{{ data.metadata.var_referens }}</span></div>
+        
+        <div class="meta-row"><span class="meta-label">Fakturadatum:</span> <span>{{ data.metadata.invoice_date }}</span></div>
+        <div class="meta-row"><span class="meta-label">Er referens:</span> <span>{{ data.customer.din_referens }}</span></div>
+
+        <div class="meta-row"><span class="meta-label">Förfallodatum:</span> <span>{{ data.metadata.due_date }}</span></div>
+        <div class="meta-row"><span class="meta-label">Kundnummer:</span> <span>{{ data.customer.kundnummer }}</span></div>
+
+        <div class="meta-row"><span class="meta-label">Betalningsvillkor:</span> <span>{{ data.metadata.betalningsvillkor }}</span></div>
+        <div class="meta-row"><span class="meta-label">Ordernummer:</span> <span>{{ data.metadata.ordernummer }}</span></div>
+
+        <div class="meta-row"><span class="meta-label">Dröjsmålsränta:</span> <span>{{ data.metadata.drojsmalsranta }}</span></div>
+        <div class="meta-row"><span class="meta-label">Ert org.nr/Personnr:</span> <span>{{ data.customer.org_nr }}</span></div>
+        
+        <div class="meta-row"><span class="meta-label">Leveransvillkor:</span> <span>{{ data.metadata.leveransvillkor }}</span></div>
+        <div class="meta-row"><span class="meta-label">Leveransdatum:</span> <span>{{ data.metadata.leveransdatum }}</span></div>
+        
+        <div class="meta-row"><span class="meta-label">Leveranssätt:</span> <span>{{ data.metadata.leveranssatt }}</span></div>
+        <div class="meta-row"><span></span> <span></span></div>
+    </div>
+
+    <table class="items">
+        <thead>
+            <tr>
+                <th>Artnr</th>
+                <th>Benämning</th>
+                <th class="text-right">Antal</th>
+                <th class="text-right">Å-pris</th>
+                <th class="text-right">Moms %</th>
+                <th class="text-right">Summa</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data['items'] %}
+            <tr>
+                <td>{{ item.artnr }}</td>
+                <td>{{ item.benamning }}</td>
+                <td class="text-right">{{ item.antal }}</td>
+                <td class="text-right">{{ item.a_pris | sek }}</td>
+                <td class="text-right">{{ item.moms_procent }} %</td>
+                <td class="text-right">{{ item.summa | sek }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals-box">
+        <div class="totals-left">
+            <div style="display:flex; justify-content: space-between;">
+                <span>Exkl. moms:</span>
+                <span>{{ data.totals.exkl_moms | sek }}</span>
+            </div>
+            <div style="display:flex; justify-content: space-between;">
+                <span>Moms summa:</span>
+                <span>{{ data.totals.moms_total | sek }}</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <strong>OCR / Referens:</strong> {{ data.metadata.ocr }}
+            </div>
+        </div>
+        <div class="totals-right">
+            <span class="att-betala-label">ATT BETALA SEK</span>
+            <span class="att-betala-amount">{{ data.totals.att_betala | sek }}</span>
+        </div>
+    </div>
+
+    <div class="message-box">
+        {{ data.message }}
+    </div>
+
+    <div class="footer">
+        <div class="footer-col">
+            <strong>Leverantör</strong><br>
+            {{ data.sender.name }}<br>
+            {{ data.sender.street }}<br>
+            {{ data.sender.city }}
+        </div>
+        <div class="footer-col">
+            <strong>Kontakt</strong><br>
+            {{ data.sender.contact }}<br>
+        </div>
+        <div class="footer-col">
+            <strong>Betalning</strong><br>
+            Plusgiro: {{ data.sender.plusgiro }}
+        </div>
+        <div class="footer-col">
+            <strong>Organisationsnummer</strong><br>
+            {{ data.sender.org_nr }}<br>
+            {% if data.sender.f_skatt %}Innehar F-skatt{% endif %}
+        </div>
+    </div>
+
+</body>
+</html>
