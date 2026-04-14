@@ -1,6 +1,10 @@
 # Invoice Assistant
 
-A simple, local web application to generate styled PDF invoices for Eva Fredlund Keramik. It uses Flask to provide a web interface, and WeasyPrint to reliably transform HTML templates into well-structured PDFs.
+A simple, local web application to generate styled PDF invoices for freelancers and small businesses. It uses Flask to provide a web interface, and WeasyPrint to reliably transform HTML templates into well-structured PDFs.
+
+## Disclaimer
+
+**Please note:** This software is provided as-is. You are entirely responsible for ensuring that the generated invoices comply with your local accounting, tax, and legal requirements. Always double-check the calculations, VAT (moms) amounts, and mandatory information on the invoices before sending them to clients.
 
 ## Features
 
